@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import com.frederickamakye.smsplus.models.Student;
 import com.frederickamakye.smsplus.utils.Database;
+import com.frederickamakye.smsplus.utils.StudentIdGenerator;
 
 class StudentRepositoryTest {
 
@@ -37,11 +38,11 @@ class StudentRepositoryTest {
     @Test
     void mustCreateStudent() throws SQLException {
 
-        Student student = new Student("1", "John Doe", "B.Tech Electrical Engineering", 400, 4.5);
+        Student student = new Student(StudentIdGenerator.generate(), "John Doe", "B.Tech Electrical Engineering", 400, 3.5);
 
         studentRepository.create(student);
 
-        Student found = studentRepository.getById("1");
+        Student found = studentRepository.getById(student.getStudentId());
 
         // check student was created
         assertNotNull(found);
@@ -53,7 +54,8 @@ class StudentRepositoryTest {
     @Test
     void mustUpdateStudent() throws SQLException {
 
-        Student student = new Student("2", "John Doe", "B.Tech Electrical Engineering", 400, 4.5);
+        Student student = new Student(StudentIdGenerator.generate(), "John Doe", "B.Tech Electrical Engineering", 400, 3.5);
+
         studentRepository.create(student);
 
         student.setFullName("Micheal Jackson");
@@ -61,7 +63,7 @@ class StudentRepositoryTest {
 
         studentRepository.update(student);
 
-        Student updated = studentRepository.getById("2");
+        Student updated = studentRepository.getById(student.getStudentId());
 
         // check updated record exist
         assertNotNull(updated);
@@ -75,12 +77,12 @@ class StudentRepositoryTest {
     @Test
     void mustDeleteStudent() throws SQLException {
 
-        Student student = new Student("3", "Anonymous", "B.Tech Electrical Engineering", 400, 4.5);
+        Student student = new Student(StudentIdGenerator.generate(), "Anonymous", "B.Tech Electrical Engineering", 400, 3.5);
 
         studentRepository.create(student);
-        studentRepository.delete("3");
+        studentRepository.delete(student.getStudentId());
 
-        Student found = studentRepository.getById("3");
+        Student found = studentRepository.getById(student.getStudentId());
 
         // check student record is not in db
         assertNull(found);
@@ -90,8 +92,11 @@ class StudentRepositoryTest {
     @Test
     void mustReturnAllStudents() throws SQLException {
 
-        studentRepository.create(new Student("4", "Anonymous 1", "B.Tech Electrical Engineering", 300, 3.3));
-        studentRepository.create(new Student("5", "Anonymous 2", "B.Tech Electrical Engineering", 200, 2.9));
+        Student student1 = new Student(StudentIdGenerator.generate(), "Anonymous 1", "B.Tech Electrical Engineering", 300, 3.3);
+        Student student2 = new Student(StudentIdGenerator.generate(), "Anonymous 2", "B.Tech Electrical Engineering", 200, 2.9);
+
+        studentRepository.create(student1);
+        studentRepository.create(student2);
 
         List<Student> students = studentRepository.getAll();
 

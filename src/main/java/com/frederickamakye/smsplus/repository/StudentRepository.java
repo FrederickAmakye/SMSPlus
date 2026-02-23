@@ -8,6 +8,8 @@ package com.frederickamakye.smsplus.repository;
 
 import com.frederickamakye.smsplus.models.Student;
 import com.frederickamakye.smsplus.utils.Database;
+import com.frederickamakye.smsplus.exceptions.RepositoryException;
+import com.frederickamakye.smsplus.exceptions.DuplicateStudentException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -28,7 +30,7 @@ public class StudentRepository {
         """;
 
         try (Connection conn = Database.connect();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, student.getStudentId());
             stmt.setString(2, student.getFullName());
@@ -42,7 +44,16 @@ public class StudentRepository {
 
             stmt.executeUpdate();
 
-            logger.info("Added new student: {}", student.getStudentId());
+            logger.info("Created new student: {}", student.getStudentId());
+
+        } catch (SQLException e) {
+
+            logger.error("Failed to create new student", e);
+
+            if (e.getMessage().contains("PRIMARY KEY"))
+                throw new DuplicateStudentException("Student ID already exists", e);
+
+            throw new RepositoryException("Failed to create new student", e);
         }
     }
 
@@ -56,7 +67,7 @@ public class StudentRepository {
         """;
 
         try (Connection conn = Database.connect();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, student.getFullName());
             stmt.setString(2, student.getProgramme());
@@ -71,6 +82,11 @@ public class StudentRepository {
             stmt.executeUpdate();
 
             logger.info("Updated student: {}", student.getStudentId());
+
+        } catch (SQLException e) {
+
+            logger.error("Failed to update student: %s".formatted(student.getStudentId()), e);
+            throw new RepositoryException("Failed to update student: %s".formatted(student.getStudentId()), e);
         }
     }
 
@@ -91,6 +107,11 @@ public class StudentRepository {
             }
 
             logger.info("Found students: {}", students.size());
+
+        } catch (SQLException e) {
+
+            logger.error("Failed to get all students", e);
+            throw new RepositoryException("Failed to get all students", e);
         }
 
         return students;
@@ -112,6 +133,11 @@ public class StudentRepository {
                     return toObject(resultset);
                 }
             }
+
+        } catch (SQLException e) {
+
+            logger.error("Failed to get student with id %s".formatted(id), e);
+            throw new RepositoryException("Failed to get student with id %s".formatted(id), e);
         }
 
         return null;
@@ -129,6 +155,11 @@ public class StudentRepository {
             ps.executeUpdate();
 
             logger.info("Deleted student: {}", id);
+
+        } catch (SQLException e) {
+
+            logger.error("Failed to delete student with id %s".formatted(id), e);
+            throw new RepositoryException("Failed to delete student with id %s".formatted(id), e);
         }
     }
 
