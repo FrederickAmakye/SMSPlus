@@ -15,7 +15,7 @@ import com.frederickamakye.smsplus.exceptions.ValidationException;
 import com.frederickamakye.smsplus.models.Student;
 import com.frederickamakye.smsplus.utils.Database;
 
-class StudentServiceTest {
+class StudentServiceTests {
 
     private StudentService studentService;
 

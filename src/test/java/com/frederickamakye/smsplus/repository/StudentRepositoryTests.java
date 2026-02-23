@@ -15,7 +15,7 @@ import com.frederickamakye.smsplus.models.Student;
 import com.frederickamakye.smsplus.utils.Database;
 import com.frederickamakye.smsplus.utils.StudentIdGenerator;
 
-class StudentRepositoryTest {
+class StudentRepositoryTests {
 
     private StudentRepository studentRepository;
 

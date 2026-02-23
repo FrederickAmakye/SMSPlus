@@ -7,6 +7,8 @@
 package com.frederickamakye.smsplus.repository;
 
 import com.frederickamakye.smsplus.models.Student;
+import com.frederickamakye.smsplus.models.GpaBandSummary;
+import com.frederickamakye.smsplus.models.ProgrammeSummary;
 import com.frederickamakye.smsplus.utils.Database;
 import com.frederickamakye.smsplus.exceptions.RepositoryException;
 import com.frederickamakye.smsplus.exceptions.DuplicateStudentException;
@@ -186,10 +188,10 @@ public class StudentRepository {
             stmt.setString(1, pattern);
             stmt.setString(2, pattern);
 
-            try (ResultSet rs = stmt.executeQuery()) {
+            try (ResultSet resultset = stmt.executeQuery()) {
 
-                while (rs.next()) {
-                    students.add(toObject(rs));
+                while (resultset.next()) {
+                    students.add(toObject(resultset));
                 }
             }
 
@@ -240,6 +242,149 @@ public class StudentRepository {
 
         return students;
     }
+
+
+    // Get list of 10 top performers (students with highest gpa). Optional filtering by programme or level
+    public List<Student> getTopPerformers(String programme, Integer level) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT * FROM students
+            WHERE 1=1
+        """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (programme != null) {
+            sql.append(" AND LOWER(programme) = LOWER(?)");
+            params.add(programme);
+        }
+
+        if (level != null) {
+            sql.append(" AND level = ?");
+            params.add(level);
+        }
+
+        sql.append(" ORDER BY gpa DESC LIMIT 10");
+
+        List<Student> students = new ArrayList<>();
+
+        try (Connection conn = Database.connect();
+            PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++)
+                stmt.setObject(i + 1, params.get(i));
+
+            try (ResultSet resultset = stmt.executeQuery()) {
+                while (resultset.next())
+                    students.add(toObject(resultset));
+            }
+
+        } catch (SQLException e) {
+
+            logger.error("Top performers report failed", e);
+            throw new RepositoryException("Report failed", e);
+        }
+
+        return students;
+    }
+
+
+    // Get at risk students (students with gpa below specific threshold)
+    public List<Student> getAtRiskStudents(double threshold) throws SQLException {
+
+        String sql = "SELECT * FROM students WHERE gpa < ? ORDER BY gpa ASC";
+
+        List<Student> students = new ArrayList<>();
+
+        try (Connection conn = Database.connect();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, threshold);
+
+            try (ResultSet resultset = stmt.executeQuery()) {
+                while (resultset.next()) {
+                    students.add(toObject(resultset));
+                }
+            }
+
+        } catch (SQLException e) {
+
+            logger.error("Failed to generate at risk students report", e);
+            throw new RepositoryException("Report generation failed", e);
+        }
+
+        return students;
+    }
+
+
+    // Get gpa band distribution (how many students fall into each GPA band)
+    public List<GpaBandSummary> getGpaDistribution() throws SQLException {
+        String sql = """
+            SELECT
+                CASE
+                    WHEN gpa < 2.0 THEN 'Below 2.0'
+                    WHEN gpa < 3.0 THEN '2.0 - 2.99'
+                    WHEN gpa < 3.7 THEN '3.0 - 3.69'
+                    ELSE '3.7 - 4.0'
+                END AS band,
+                COUNT(*) AS total
+            FROM students
+            GROUP BY band
+        """;
+
+        List<GpaBandSummary> results = new ArrayList<>();
+
+        try (Connection conn = Database.connect();
+            Statement stmt = conn.createStatement();
+            ResultSet resultset = stmt.executeQuery(sql)) {
+
+            while (resultset.next())
+                results.add(new GpaBandSummary(
+                    resultset.getString("band"),
+                    resultset.getInt("total")
+                ));
+
+        } catch (SQLException e) {
+
+            logger.error("GPA distribution failed", e);
+            throw new RepositoryException("Report failed", e);
+        }
+
+        return results;
+    }
+
+
+    // Get programme summary (total students per programme and average GPA per programme)
+    public List<ProgrammeSummary> getProgrammeSummary() throws SQLException {
+        String sql = """
+            SELECT programme,
+                COUNT(*) as total,
+                AVG(gpa) as averageGpa
+            FROM students
+            GROUP BY programme
+        """;
+
+        List<ProgrammeSummary> results = new ArrayList<>();
+
+        try (Connection conn = Database.connect();
+            Statement stmt = conn.createStatement();
+            ResultSet resultset = stmt.executeQuery(sql)) {
+
+            while (resultset.next())
+                results.add(new ProgrammeSummary(
+                    resultset.getString("programme"),
+                    resultset.getInt("total"),
+                    resultset.getDouble("averageGpa")
+                ));
+
+        } catch (SQLException e) {
+
+            logger.error("Programme summary failed", e);
+            throw new RepositoryException("Report failed", e);
+        }
+
+        return results;
+    }
+
 
 
     // Map database student records to Student objects

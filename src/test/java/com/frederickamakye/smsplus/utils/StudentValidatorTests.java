@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import com.frederickamakye.smsplus.exceptions.ValidationException;
 import com.frederickamakye.smsplus.models.Student;
 
-class StudentValidatorTest {
+class StudentValidatorTests {
 
     @Test
     void mustPassValidationForValidStudent() {

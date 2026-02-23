@@ -10,6 +10,8 @@ import java.util.List;
 
 import com.frederickamakye.smsplus.exceptions.ValidationException;
 import com.frederickamakye.smsplus.models.Student;
+import com.frederickamakye.smsplus.models.GpaBandSummary;
+import com.frederickamakye.smsplus.models.ProgrammeSummary;
 import com.frederickamakye.smsplus.repository.StudentRepository;
 import com.frederickamakye.smsplus.utils.StudentIdGenerator;
 import com.frederickamakye.smsplus.utils.StudentValidator;
@@ -54,8 +56,11 @@ public class StudentService {
     public List<Student> getAllStudents() throws SQLException {
 
         return studentRepository.getAll();
-    }
+    }   
 
+
+
+    // Searching and sorting logic
     public List<Student> searchStudents(String query) throws SQLException {
         if (query == null || query.isBlank()) {
             throw new ValidationException("Search query cannot be empty");
@@ -70,5 +75,24 @@ public class StudentService {
 
     public List<Student> sortByFullName(String direction) throws SQLException {
         return studentRepository.sortBy("fullname", direction);
+    }
+
+
+
+    // Reporting logic
+    public List<GpaBandSummary> getGpaDistributionReport() throws SQLException {
+        return studentRepository.getGpaDistribution();
+    }
+
+    public List<Student> getTopPerformersReport(String programme, Integer level) throws SQLException {
+        return studentRepository.getTopPerformers(programme, level);
+    }
+
+    public List<Student> getAtRiskStudentsReport(double threshold) throws SQLException {
+        return studentRepository.getAtRiskStudents(threshold);
+    }
+
+    public List<ProgrammeSummary> getProgrammeSummaryReport() throws SQLException {
+        return studentRepository.getProgrammeSummary();
     }
 }
