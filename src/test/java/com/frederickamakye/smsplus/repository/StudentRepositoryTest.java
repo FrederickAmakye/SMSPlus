@@ -1,0 +1,101 @@
+package com.frederickamakye.smsplus.repository;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.frederickamakye.smsplus.models.Student;
+import com.frederickamakye.smsplus.utils.Database;
+
+class StudentRepositoryTest {
+
+    private StudentRepository studentRepository;
+
+    @BeforeEach
+    void setup() throws SQLException {
+        // Configure test database
+        System.setProperty("db.url", "jdbc:sqlite:data/test.db");
+        Database.init();
+        studentRepository = new StudentRepository();
+
+        // Reset database before each test begins
+        try (Connection conn = Database.connect();
+             Statement stmt = conn.createStatement()) {
+
+            stmt.execute("DELETE FROM students");
+        }
+    }
+
+
+    @Test
+    void mustCreateStudent() throws SQLException {
+
+        Student student = new Student("1", "John Doe", "B.Tech Electrical Engineering", 400, 4.5);
+
+        studentRepository.create(student);
+
+        Student found = studentRepository.getById("1");
+
+        // check student was created
+        assertNotNull(found);
+        // check the student created is the same as the one provided
+        assertEquals(student.getFullName(), found.getFullName());
+    }
+
+
+    @Test
+    void mustUpdateStudent() throws SQLException {
+
+        Student student = new Student("2", "John Doe", "B.Tech Electrical Engineering", 400, 4.5);
+        studentRepository.create(student);
+
+        student.setFullName("Micheal Jackson");
+        student.setGpa(4.9);
+
+        studentRepository.update(student);
+
+        Student updated = studentRepository.getById("2");
+
+        // check updated record exist
+        assertNotNull(updated);
+
+        // check updated data is same as what's in db
+        assertEquals("Micheal Jackson", updated.getFullName());
+        assertEquals(4.9, updated.getGpa());
+    }
+
+
+    @Test
+    void mustDeleteStudent() throws SQLException {
+
+        Student student = new Student("3", "Anonymous", "B.Tech Electrical Engineering", 400, 4.5);
+
+        studentRepository.create(student);
+        studentRepository.delete("3");
+
+        Student found = studentRepository.getById("3");
+
+        // check student record is not in db
+        assertNull(found);
+    }
+
+
+    @Test
+    void mustReturnAllStudents() throws SQLException {
+
+        studentRepository.create(new Student("4", "Anonymous 1", "B.Tech Electrical Engineering", 300, 3.3));
+        studentRepository.create(new Student("5", "Anonymous 2", "B.Tech Electrical Engineering", 200, 2.9));
+
+        List<Student> students = studentRepository.getAll();
+
+        // check 2 student records are in db which is the total records in the db
+        assertEquals(2, students.size());
+    }
+}
