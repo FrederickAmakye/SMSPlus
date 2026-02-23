@@ -1,0 +1,8 @@
+JDK: 21
+
+JavaFX SDK: 21.0.2
+
+VM OPTIONS for Windows:
+
+--module-path "C:\path\to\javafx-sdk-21\lib"
+--add-modules javafx.controls,javafx.fxml
