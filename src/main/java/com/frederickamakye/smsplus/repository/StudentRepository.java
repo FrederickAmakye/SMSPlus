@@ -1,5 +1,5 @@
 /*
- * StudentRepository takes care of all activities related to student records. Such as:
+ * StudentRepository takes care of activities related to student data. Such as:
  * - Execution of CRUD operations
  * - Mapping student database rows to Student objects
 */
@@ -57,6 +57,7 @@ public class StudentRepository {
         }
     }
 
+
     // Update the records of an existing student in the database
     public void update(Student student) throws SQLException {
         String sql = """
@@ -90,6 +91,7 @@ public class StudentRepository {
         }
     }
 
+
     // Get all student records from the database.
     // Returns array of student objects
     public List<Student> getAll() throws SQLException {
@@ -117,6 +119,7 @@ public class StudentRepository {
         return students;
     }
 
+
     // Get a specific student record from db with student's id
     // Returns student object or null
     public Student getById(String id) throws SQLException {
@@ -143,6 +146,7 @@ public class StudentRepository {
         return null;
     }
 
+
     // Delete a delete a student record from db with student's id
     public void delete(String id) throws SQLException {
 
@@ -162,6 +166,81 @@ public class StudentRepository {
             throw new RepositoryException("Failed to delete student with id %s".formatted(id), e);
         }
     }
+
+
+    // Search for students using id or full name
+    public List<Student> search(String query) throws SQLException {
+        String sql = """
+            SELECT * FROM students
+            WHERE student_id LIKE ?
+            OR LOWER(full_name) LIKE LOWER(?)
+        """;
+
+        List<Student> students = new ArrayList<>();
+
+        try (Connection conn = Database.connect();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            String pattern = "%" + query + "%";
+
+            stmt.setString(1, pattern);
+            stmt.setString(2, pattern);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    students.add(toObject(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+
+            logger.error("Search query failed", e);
+            throw new RepositoryException("Search failed", e);
+        }
+
+        return students;
+    }
+    
+
+    // Sort records by specific field (gpa, fullname, or level)
+    public List<Student> sortBy(String field, String direction) throws SQLException {
+
+        String column;
+
+        switch (field.toLowerCase()) {
+            case "gpa" -> column = "gpa";
+            case "fullname" -> column = "full_name";
+            case "level" -> column = "level";
+            default -> throw new IllegalArgumentException("Invalid sorting field");
+        }
+
+        String order = "ASC";
+        if ("desc".equalsIgnoreCase(direction)) {
+            order = "DESC";
+        }
+
+        String sql = "SELECT * FROM students ORDER BY " + column + " " + order;
+
+        List<Student> students = new ArrayList<>();
+
+        try (Connection conn = Database.connect();
+            Statement stmt = conn.createStatement();
+            ResultSet resultset = stmt.executeQuery(sql)) {
+
+            while (resultset.next()) {
+                students.add(toObject(resultset));
+            }
+
+        } catch (SQLException e) {
+
+            logger.error("Sorting failed", e);
+            throw new RepositoryException("Sorting failed", e);
+        }
+
+        return students;
+    }
+
 
     // Map database student records to Student objects
     private Student toObject(ResultSet resultset) throws SQLException {

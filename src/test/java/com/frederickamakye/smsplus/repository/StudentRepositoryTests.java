@@ -103,4 +103,36 @@ class StudentRepositoryTest {
         // check 2 student records are in db which is the total records in the db
         assertEquals(2, students.size());
     }
+
+
+    @Test
+    void mustSearchStudentsByName() throws SQLException {
+
+        Student student1 = new Student(StudentIdGenerator.generate(), "John Doe", "B.Tech Electrical Engineering", 100, 3.0);
+        Student student2 = new Student(StudentIdGenerator.generate(), "Jane Smith", "B.Tech Electrical Engineering", 100, 3.5);
+
+        studentRepository.create(student1);
+        studentRepository.create(student2);
+
+        List<Student> results = studentRepository.search("john");
+
+        // 1 student has name john so check 1 record is returned
+        assertEquals(1, results.size());
+    }
+
+
+    @Test
+    void mustSortStudentsByGpaDescending() throws SQLException {
+
+        Student low = new Student(StudentIdGenerator.generate(), "Student One", "B.Tech Electrical Engineering", 100, 2.0);
+        Student high = new Student(StudentIdGenerator.generate(), "Student Two", "B.Tech Electrical Engineering", 100, 3.8);
+
+        studentRepository.create(low);
+        studentRepository.create(high);
+
+        List<Student> students = studentRepository.sortBy("gpa", "desc");
+
+        // since records were sorted by gpa in descending order check if the last record(high) is now the first record
+        assertEquals(high.getStudentId(), students.get(0).getStudentId());
+    }
 }
