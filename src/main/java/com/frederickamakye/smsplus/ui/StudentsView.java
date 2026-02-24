@@ -30,9 +30,8 @@ public class StudentsView extends BorderPane {
 
         // ================= TOP SECTION =================
         HBox topControls = new HBox(10);
-
         TextField searchField = new TextField();
-        searchField.setPromptText("Search student...");
+        searchField.setPromptText("Search students...");
 
         ComboBox<String> programmeFilter = new ComboBox<>();
         programmeFilter.getItems().add("Programme");
@@ -369,6 +368,9 @@ public class StudentsView extends BorderPane {
         }
     }
 
+    public void refresh() {
+        loadStudents();
+    }
 
     private void showError(String message) {
 
