@@ -207,7 +207,6 @@ public class StudentRepository {
 
     // Sort records by specific field (gpa, fullname, or level)
     public List<Student> sortBy(String field, String direction) throws SQLException {
-
         String column;
 
         switch (field.toLowerCase()) {
@@ -238,6 +237,42 @@ public class StudentRepository {
 
             logger.error("Sorting failed", e);
             throw new RepositoryException("Sorting failed", e);
+        }
+
+        return students;
+    }
+
+    // filter records by  level, programme, or status
+    public List<Student> filterBy(String field, Object value) throws SQLException {
+        String column;
+
+        switch (field.toLowerCase()) {
+            case "programme" -> column = "programme";
+            case "level" -> column = "level";
+            case "status" -> column = "status";
+            default -> throw new IllegalArgumentException("Invalid filtering field");
+        }
+
+        String sql = "SELECT * FROM students WHERE " + column + " = ?";
+
+        List<Student> students = new ArrayList<>();
+
+        try (Connection conn = Database.connect();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setObject(1, value);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    students.add(toObject(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+
+            logger.error("Filtering failed", e);
+            throw new RepositoryException("Filtering failed", e);
         }
 
         return students;
@@ -383,6 +418,25 @@ public class StudentRepository {
         }
 
         return results;
+    }
+
+
+    public List<String> getDistinctProgrammes() throws SQLException {
+
+        String sql = "SELECT DISTINCT programme FROM students";
+
+        List<String> programmes = new ArrayList<>();
+
+        try (Connection conn = Database.connect();
+            Statement stmt = conn.createStatement();
+            ResultSet resultset = stmt.executeQuery(sql)) {
+
+            while (resultset.next()) {
+                programmes.add(resultset.getString("programme"));
+            }
+        }
+
+        return programmes;
     }
 
 

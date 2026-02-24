@@ -32,6 +32,16 @@ public class StudentService {
             student.setStudentId(StudentIdGenerator.generate());
         }
 
+        // Set creation timestamp if missing
+        if (student.getDateAdded() == null) {
+            student.setDateAdded(java.time.LocalDate.now().toString());
+        }
+
+        // Set default status if missing
+        if (student.getStatus() == null) {
+            student.setStatus("Active");
+        }
+
         StudentValidator.validate(student);
 
         studentRepository.create(student);
@@ -60,7 +70,7 @@ public class StudentService {
 
 
 
-    // Searching and sorting logic
+    // Searching, filtering and sorting logic
     public List<Student> searchStudents(String query) throws SQLException {
         if (query == null || query.isBlank()) {
             throw new ValidationException("Search query cannot be empty");
@@ -77,6 +87,21 @@ public class StudentService {
         return studentRepository.sortBy("fullname", direction);
     }
 
+    public List<String> getProgrammes() throws SQLException {
+        return studentRepository.getDistinctProgrammes();
+    }
+
+    public List<Student> filterByProgramme(String programme) throws SQLException {
+        return studentRepository.filterBy("programme", programme);
+    }
+
+    public List<Student> filterByLevel(Integer level) throws SQLException {
+        return studentRepository.filterBy("level", level);
+    }
+
+    public List<Student> filterByStatus(String status) throws SQLException {
+        return studentRepository.filterBy("status", status);
+    }
 
 
     // Reporting logic
